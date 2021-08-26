@@ -2,9 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="js/pixi.min.js"></script>
 </head>
 <body>
+    <div class="app"></div>
+    <script>
+        let app;
+        let container = document.querySelector(".app");
 
+        window.onload = function() {
+            app = new PIXI.Application(
+                {
+                    width: container.clientWidth,
+                    height: container.clientHeight,
+                    backgroundColor: 0xAAAAAA
+                }
+            );
+
+            container.appendChild(app.view);
+        }
+    </script>
 </body>
 </html>
