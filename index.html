@@ -8,21 +8,86 @@
     <script src="js/pixi.min.js"></script>
 </head>
 <body>
-    <div class="app"></div>
+    <div id="gameContainer"></div>
     <script>
         let app;
-        let container = document.querySelector(".app");
+        let starShip;
+        let bullets = [];
+        let bulletSpeed = 10;
+        let gameContainer = document.querySelector("#gameContainer");
 
         window.onload = function() {
             app = new PIXI.Application(
                 {
-                    width: container.clientWidth,
-                    height: container.clientHeight,
+                    width: window.innerWidth,
+                    height: window.innerHeight,
                     backgroundColor: 0xAAAAAA
                 }
             );
 
-            container.appendChild(app.view);
+            gameContainer.appendChild(app.view);
+
+            //Star ship object
+            starShip = new PIXI.Sprite.from("image/starShip.png");
+            starShip.anchor.set(0.5,1);
+            starShip.x = app.view.width/2;
+            starShip.y = app.view.height;
+
+            app.stage.addChild(starShip);
+            app.ticker.add(gameLoop);
+            //keyboard events
+            app.stage.interactive = true;
+            window.addEventListener("keydown", moveShip);
+        }
+
+        function moveShip(e) {
+            switch (e.keyCode) {
+                case 37:
+                starShip.x +=5;
+                break;
+                case 39:
+                starShip.x -=5;
+                break;
+                case 32:
+                fireBullet();
+                break;
+            }
+        }
+
+        function fireBullet(e){
+            let bullet = createBullet();
+            bullets.push(bullet);
+        }
+
+        function createBullet() {
+            let bullet = new PIXI.Sprite.from("image/bullet.png")
+            bullet.anchor.set(0.5);
+            bullet.x = starShip.x;
+            bullet.y = starShip.y;
+            bullet.speed = bulletSpeed;
+            app.stage.addChild(bullet);
+
+            return bullet;
+        }
+
+        function updateBullets(delta) {
+            for(let i=0; i<bullets.length; i++){
+                bullets[i].position.y -= bullets[i].speed;
+                if (bullets[i].position.y < 0) {
+                    bullets[i].dead = true;
+                }
+            }
+
+            for(let i=0; i<bullets.length; i++){
+                if (bullets[i].dead) {
+                    app.stage.removeChild(bullets[i]);
+                    bullets.splice(i,1);
+                }
+            }
+        }
+
+        function gameLoop(delta) {
+            updateBullets(delta);
         }
     </script>
 </body>
