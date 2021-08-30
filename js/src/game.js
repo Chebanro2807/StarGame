@@ -4,6 +4,8 @@ class App {
         this.starShip;
         this.bullets = [];
         this.bulletSpeed = 10;
+        this.planets = [];
+        this.planetSpeed = 0.5;
         this.gameContainer = document.querySelector("#gameContainer");
 
         this.app = new PIXI.Application(
@@ -26,6 +28,7 @@ class App {
 //keyboard events
         this.app.stage.interactive = true;
         window.addEventListener("keydown", this.moveShip.bind(this));
+        this.createPlanet();
     }
 
     moveShip(e) {
@@ -44,6 +47,18 @@ class App {
 
     fireBullet() {
         this.bullets.push(this.createBullet());
+    }
+
+    createPlanet() {
+        let planet = new PIXI.Sprite.from("image/planet.png")
+        planet.anchor.set(0.5,1);
+        planet.anchor.set(0.5);
+        planet.x = this.app.view.width/2;
+        planet.y = 0;
+        planet.speed = this.planetSpeed;
+        this.app.stage.addChild(planet);
+
+        return this.planets.push(planet);
     }
 
     createBullet() {
@@ -74,8 +89,15 @@ class App {
         }
     }
 
+    updatePlanets() {
+        for(let i=0; i<this.planets.length; i++){
+            this.planets[i].position.y += this.planets[i].speed;
+        }
+    }
+
     gameLoop() {
         this.updateBullets();
+        this.updatePlanets()
     }
 }
 
