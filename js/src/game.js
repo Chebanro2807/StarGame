@@ -92,12 +92,42 @@ class App {
     updatePlanets() {
         for(let i=0; i<this.planets.length; i++){
             this.planets[i].position.y += this.planets[i].speed;
+            if (this.planets[i].position.y > this.app.view.height) {
+                this.planets[i].dead = true;
+            }
+        }
+
+        for(let i=0; i<this.planets.length; i++){
+            if (this.planets[i].dead) {
+                this.app.stage.removeChild(this.planets[i]);
+                this.planets.splice(i,1);
+            }
         }
     }
 
     gameLoop() {
         this.updateBullets();
-        this.updatePlanets()
+        this.updatePlanets();
+        for (let i=0; i<this.bullets.length; i++) {
+            for (let j=0; j<this.planets.length; j++) {
+                if (this.collision(this.bullets[i], this.planets[j])) {
+                    this.bullets[i].dead = true;
+                    this.planets[j].dead = true;
+                    this.updateBullets();
+                    this.updatePlanets();
+                }
+            }
+        }
+    }
+
+    collision(objA,objB) {
+        let aBox = objA.getBounds();
+        let bBox = objB.getBounds();
+
+        return aBox.x + aBox.width > bBox.x &&
+               aBox.x < bBox.x + bBox.width &&
+               aBox.y + aBox.height > bBox.y &&
+               aBox.y < bBox.y + bBox.height;
     }
 }
 
