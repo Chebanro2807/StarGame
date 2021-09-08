@@ -2,8 +2,10 @@ import PictFactory from "./core/pictFactory";
 
 class App {
     constructor() {
+        this.factory = new PictFactory();
         this.bullets = [];
         this.planets = [];
+        this.starShipLoopAction = [];
         this.gameContainer = document.querySelector("#gameContainer");
 
         this.app = new PIXI.Application(
@@ -14,94 +16,107 @@ class App {
             });
 
         this.gameContainer.appendChild(this.app.view);
-        // this.starShip = new StarShipFactory(this.app);
-        this.starShip = this.pictDecorator(new PictFactory('starShip', this.app.view))
+        this.starShip = this.decoratedFactory('starShip', this.app.view);
         this.app.ticker.add(this.gameLoop.bind(this));
         //keyboard events
         this.app.stage.interactive = true;
         window.addEventListener("keydown", this.moveShip.bind(this));
+        window.addEventListener("keyup", this.moveCheker.bind(this));
         //
-        // this.planets.push(new PlanetFactory(this.app));
-        this.planets.push(this.pictDecorator(new PictFactory('planet', this.app.view.width)));
+        this.planets.push(this.decoratedFactory('planet', this.app.view.width));
     }
 
     pictDecorator(pict) {
         if (pict === null) {
             console.log('попали в нулл')
         } else {
-            this.app.stage.addChild(pict);
+            this.app.stage.addChild(pict.sprite);
         }
         return pict;
+    }
+
+    decoratedFactory(image, ...args) {
+        return this.pictDecorator(this.factory.create(image, ...args));
     }
 
     moveShip(e) {
         switch (e.keyCode) {
             case 32:
-                this.fireBullet(e);
-                //break;
+                this.starShipLoopAction.push("fire");
+                // this.fireBullet();
+                break;
             case 37:
-                this.starShip.x -=10;
+                this.starShipLoopAction.push("left");
+                // this.starShip.moveLeft();
                 break;
             case 39:
-                this.starShip.x +=10;
+                this.starShipLoopAction.push("right");
+                // this.starShip.moveRight();
+                break;
+        }
+    }
+
+    moveCheker(e) {
+        switch (e.keyCode) {
+            case 32:
+                this.starShipLoopAction.reduce("fire");
+                break;
+            case 37:
+                this.starShipLoopAction.reduce("left");
+                break;
+            case 39:
+                this.starShipLoopAction.reduce("right");
                 break;
         }
     }
 
     fireBullet() {
-        // this.bullets.push(new BulletFactory(this.starShip, this.app));
-        this.bullets.push(this.pictDecorator(new PictFactory('bullet', this.starShip)));
+        this.bullets.push(this.decoratedFactory('bullet', this.starShip.sprite));
     }
 
-    updateBullets() {
-        for(let i=0; i<this.bullets.length; i++){
-            this.bullets[i].position.y -= this.bullets[i].speed;
-            if (this.bullets[i].position.y < 0) {
-                this.bullets[i].dead = true;
+    updateObject(array, direction) {
+        for(let i=0; i<array.length; i++) {
+            array[i].move(direction);
+            if (array[i].sprite.position.y < 0) {
+                array[i].dead = true;
             }
-            if (this.bullets[i].dead) {
-                this.app.stage.removeChild(this.bullets[i]);
-                this.bullets.splice(i,1);
-            }
+            this.checkDeath(array, i);
         }
     }
 
-    updatePlanets() {
-        for(let i=0; i<this.planets.length; i++){
-            this.planets[i].y += this.planets[i].speed;
-            if (this.planets[i].y > this.app.view.height) {
-                this.planets[i].dead = true;
-            }
-            if (this.planets[i].dead) {
-                this.app.stage.removeChild(this.planets[i]);
-                this.planets.splice(i,1);
-            }
+    checkDeath(arrObjects, i) {
+        if (arrObjects[i].isDead()) {
+            this.app.stage.removeChild(arrObjects[i].sprite);
+            arrObjects.splice(i,1);
         }
     }
 
     gameLoop() {
-        this.updateBullets();
-        this.updatePlanets();
+        this.updateObject(this.bullets,'up');
+        this.updateObject(this.planets,'down');
         for (let i=0; i<this.bullets.length; i++) {
             for (let j=0; j<this.planets.length; j++) {
-                if (this.collision(this.bullets[i], this.planets[j])) {
+                if (this.planets[j].checkCollision(this.bullets[i])) {
                     this.bullets[i].dead = true;
                     this.planets[j].dead = true;
-                    this.updateBullets();
-                    this.updatePlanets();
+                    this.checkDeath(this.bullets, i);
+                    this.checkDeath(this.planets, j);
                 }
             }
         }
-    }
-
-    collision(objA,objB) {
-        let aBox = objA.getBounds();
-        let bBox = objB.getBounds();
-
-        return aBox.x + aBox.width > bBox.x &&
-               aBox.x < bBox.x + bBox.width &&
-               aBox.y + aBox.height > bBox.y &&
-               aBox.y < bBox.y + bBox.height;
+        for (let i=0; i<this.starShipLoopAction.length; i++) {
+            switch (this.starShipLoopAction[i]) {
+                case "fire":
+                    this.fireBullet();
+                    break;
+                case "left":
+                    this.starShip.moveLeft();
+                    break;
+                case "right":
+                    this.starShip.moveRight();
+                    break;
+            }
+        }
     }
 }
 
