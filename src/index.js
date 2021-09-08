@@ -42,33 +42,46 @@ class App {
     moveShip(e) {
         switch (e.keyCode) {
             case 32:
-                this.starShipLoopAction.push("fire");
-                // this.fireBullet();
+                this.containPressCheck("fire");
                 break;
             case 37:
-                this.starShipLoopAction.push("left");
-                // this.starShip.moveLeft();
+                this.containPressCheck("left");
                 break;
             case 39:
-                this.starShipLoopAction.push("right");
-                // this.starShip.moveRight();
+                this.containPressCheck("right");
                 break;
         }
     }
 
+    containPressCheck(action) {
+        console.log(this.starShipLoopAction.indexOf(action))
+        if (this.starShipLoopAction.indexOf(action) === -1){
+            this.starShipLoopAction.push(action);
+        }
+    }
+
+    containUnPressCheck(action) {
+        if (this.starShipLoopAction.filter(item => item === action).length > 0) {
+            this.starShipLoopAction.splice(this.starShipLoopAction.findIndex((cmd) => cmd === action), this.starShipLoopAction.filter(item => item === action).length);
+        }
+    }
+
     moveCheker(e) {
+        console.log(this.starShipLoopAction);
         switch (e.keyCode) {
             case 32:
-                this.starShipLoopAction.reduce("fire");
+                this.containUnPressCheck("fire")
                 break;
             case 37:
-                this.starShipLoopAction.reduce("left");
+                this.containUnPressCheck("left")
                 break;
             case 39:
-                this.starShipLoopAction.reduce("right");
+                this.containUnPressCheck("right")
                 break;
         }
     }
+
+
 
     fireBullet() {
         this.bullets.push(this.decoratedFactory('bullet', this.starShip.sprite));
