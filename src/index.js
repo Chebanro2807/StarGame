@@ -4,6 +4,7 @@ class App {
     constructor() {
         this.factory = new PictFactory();
         this.bullets = [];
+        this.fireRate = 0;
         this.planets = [];
         this.starShipLoopAction = [];
         this.gameContainer = document.querySelector("#gameContainer");
@@ -18,10 +19,11 @@ class App {
         this.gameContainer.appendChild(this.app.view);
         this.starShip = this.decoratedFactory('starShip', this.app.view);
         this.app.ticker.add(this.gameLoop.bind(this));
+
         //keyboard events
         this.app.stage.interactive = true;
-        window.addEventListener("keydown", this.moveShip.bind(this));
-        window.addEventListener("keyup", this.moveCheker.bind(this));
+        window.addEventListener("keydown", (event) => this.containPressCheck(this.eventDistributor(event)));
+        window.addEventListener("keyup", (event) => this.containUnPressCheck(this.eventDistributor(event)));
         //
         this.planets.push(this.decoratedFactory('planet', this.app.view.width));
     }
@@ -36,52 +38,40 @@ class App {
     }
 
     decoratedFactory(image, ...args) {
+        if (image === "starShip" && this.starShip != null && !this.starShip.isDead()) // або наприклад !this.starShip.dead
+        {
+            console.log("We have one!");
+            return this.starShip;
+        }
         return this.pictDecorator(this.factory.create(image, ...args));
     }
 
-    moveShip(e) {
-        switch (e.keyCode) {
-            case 32:
-                this.containPressCheck("fire");
-                break;
-            case 37:
-                this.containPressCheck("left");
-                break;
-            case 39:
-                this.containPressCheck("right");
-                break;
-        }
-    }
-
     containPressCheck(action) {
-        console.log(this.starShipLoopAction.indexOf(action))
-        if (this.starShipLoopAction.indexOf(action) === -1){
+        if (this.starShipLoopAction.indexOf(action) === -1) {
             this.starShipLoopAction.push(action);
         }
     }
 
     containUnPressCheck(action) {
-        if (this.starShipLoopAction.filter(item => item === action).length > 0) {
-            this.starShipLoopAction.splice(this.starShipLoopAction.findIndex((cmd) => cmd === action), this.starShipLoopAction.filter(item => item === action).length);
+        let index = this.starShipLoopAction.indexOf(action);
+        if (index !== -1) {
+            this.starShipLoopAction.splice(index, 1);
         }
     }
 
-    moveCheker(e) {
-        console.log(this.starShipLoopAction);
+    eventDistributor(e) {
         switch (e.keyCode) {
             case 32:
-                this.containUnPressCheck("fire")
-                break;
+                return "fire";
+            break;
             case 37:
-                this.containUnPressCheck("left")
-                break;
+                return "left";
+            break;
             case 39:
-                this.containUnPressCheck("right")
-                break;
+                return "right";
+            break;
         }
     }
-
-
 
     fireBullet() {
         this.bullets.push(this.decoratedFactory('bullet', this.starShip.sprite));
@@ -90,10 +80,33 @@ class App {
     updateObject(array, direction) {
         for(let i=0; i<array.length; i++) {
             array[i].move(direction);
-            if (array[i].sprite.position.y < 0) {
-                array[i].dead = true;
-            }
+            this.checkBorders(array[i], direction);
             this.checkDeath(array, i);
+        }
+    }
+
+    checkBorders(object, direction) {
+        switch (direction) {
+            case "up":
+                if (object.sprite.position.y < 0) {
+                    object.dead = true;
+                }
+                break;
+            case "right":
+                if (object.sprite.position.x > window.innerWidth - this.starShip.sprite.width/2) {
+                    object.moveLeft();
+                }
+                break;
+            case "down":
+                if (object.sprite.position.y > (window.innerHeight - this.starShip.sprite.height)) {
+                    object.dead = true;
+                }
+                break;
+            case "left":
+                if (object.sprite.position.x < 0 + this.starShip.sprite.width/2) {
+                    object.moveRight();
+                }
+                break;
         }
     }
 
@@ -101,6 +114,27 @@ class App {
         if (arrObjects[i].isDead()) {
             this.app.stage.removeChild(arrObjects[i].sprite);
             arrObjects.splice(i,1);
+        }
+    }
+
+    updateStarShipLocation() {
+        for (let i=0; i<this.starShipLoopAction.length; i++) {
+            switch (this.starShipLoopAction[i]) {
+                case "fire":
+                    if (this.fireRate === 0) {
+                        this.fireBullet();
+                    }
+                    this.fireRate = (++this.fireRate === 7) ? 0 : this.fireRate;
+                    break;
+                case "left":
+                    this.starShip.moveLeft();
+                    this.checkBorders(this.starShip, "left");
+                    break;
+                case "right":
+                    this.starShip.moveRight();
+                    this.checkBorders(this.starShip, "right");
+                    break;
+            }
         }
     }
 
@@ -117,19 +151,7 @@ class App {
                 }
             }
         }
-        for (let i=0; i<this.starShipLoopAction.length; i++) {
-            switch (this.starShipLoopAction[i]) {
-                case "fire":
-                    this.fireBullet();
-                    break;
-                case "left":
-                    this.starShip.moveLeft();
-                    break;
-                case "right":
-                    this.starShip.moveRight();
-                    break;
-            }
-        }
+        this.updateStarShipLocation();
     }
 }
 
