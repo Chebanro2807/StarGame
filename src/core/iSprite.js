@@ -39,6 +39,10 @@ export default class ISprite {
     }
 
     checkCollision(object) {
+        if (object === undefined) {
+            console.log("collision's got undefined object");
+            return false;
+        }
         let aBox = this.sprite.getBounds();
         let bBox = object.sprite.getBounds();
 

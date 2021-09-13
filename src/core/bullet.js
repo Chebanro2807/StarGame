@@ -7,6 +7,7 @@ export default class Bullet extends ISprite {
             let starShip = args[0];
             this.sprite.anchor.set(0.5,1);
             this.sprite.width = 4;
+            this.sprite.height = 10;
             this.sprite.x = starShip.x + this.sprite.width/2;
             this.sprite.y = starShip.y - starShip.height;
         }

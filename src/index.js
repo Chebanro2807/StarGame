@@ -6,6 +6,8 @@ class App {
         this.bullets = [];
         this.fireRate = 0;
         this.planets = [];
+        this.lvl = 1;
+        this.timeOut = 3000;
         this.starShipLoopAction = [];
         this.gameContainer = document.querySelector("#gameContainer");
 
@@ -25,7 +27,17 @@ class App {
         window.addEventListener("keydown", (event) => this.containPressCheck(this.eventDistributor(event)));
         window.addEventListener("keyup", (event) => this.containUnPressCheck(this.eventDistributor(event)));
         //
-        this.planets.push(this.decoratedFactory('planet', this.app.view.width));
+        setInterval(this.planetsCreate.bind(this), this.timeOut);
+    }
+
+    getRandom(min, max) {
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    planetsCreate() {
+        let planet = this.decoratedFactory('planet', this.setPlanetSpeedByLevel());
+        planet.sprite.x = this.getRandom((0 + planet.sprite.width), (window.innerWidth - planet.sprite.width));
+        this.planets.push(planet);
     }
 
     pictDecorator(pict) {
@@ -38,7 +50,7 @@ class App {
     }
 
     decoratedFactory(image, ...args) {
-        if (image === "starShip" && this.starShip != null && !this.starShip.isDead()) // або наприклад !this.starShip.dead
+        if (image === "starShip" && this.starShip != null && !this.starShip.isDead()) // или !this.starShip.dead
         {
             console.log("We have one!");
             return this.starShip;
@@ -78,7 +90,7 @@ class App {
     }
 
     updateObject(array, direction) {
-        for(let i=0; i<array.length; i++) {
+        for (let i=array.length-1; i>-1; i--) {
             array[i].move(direction);
             this.checkBorders(array[i], direction);
             this.checkDeath(array, i);
@@ -98,8 +110,10 @@ class App {
                 }
                 break;
             case "down":
-                if (object.sprite.position.y > (window.innerHeight - this.starShip.sprite.height)) {
+                if (object.sprite.position.y > (window.innerHeight - this.starShip.sprite.height - object.sprite.height/2 - 11)) {
                     object.dead = true;
+                    // to do
+                    //нужно заменить 10 на высоту пули. this.decoratedFactory('bullet', this.starShip.sprite).sprite.height => это как вариант
                 }
                 break;
             case "left":
@@ -138,16 +152,24 @@ class App {
         }
     }
 
+    updatePlanetSpeed() {
+        for (let i=0; i<this.planets.length; i++) {
+            this.planets[i].speed = this.setPlanetSpeedByLevel();
+        }
+    }
+
+    setPlanetSpeedByLevel() {
+        return this.lvl*0.5;
+    }
+
     gameLoop() {
         this.updateObject(this.bullets,'up');
         this.updateObject(this.planets,'down');
         for (let i=0; i<this.bullets.length; i++) {
-            for (let j=0; j<this.planets.length; j++) {
+            for (let j = 0; j < this.planets.length; j++) {
                 if (this.planets[j].checkCollision(this.bullets[i])) {
                     this.bullets[i].dead = true;
                     this.planets[j].dead = true;
-                    this.checkDeath(this.bullets, i);
-                    this.checkDeath(this.planets, j);
                 }
             }
         }
